@@ -1,0 +1,9 @@
+[Unit]
+Description=Runs mq_sync every second
+
+[Timer]
+OnUnitActiveSec=1s
+Unit=mq_sync.service
+
+[Install]
+WantedBy=timers.target
