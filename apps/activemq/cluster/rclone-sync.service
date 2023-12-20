@@ -1,0 +1,18 @@
+[Unit]
+Description=Rclone Service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/rclone sync --config /root/.config/rclone/rclone.conf /root/test01 remote:/root/test02
+#ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+User=root
+Group=root
+StandardOutput=file:/path/to/logfile.log
+StandardError=file:/path/to/error.log
+
+[Install]
+WantedBy=multi-user.target

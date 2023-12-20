@@ -1,5 +1,0 @@
-[Unit]
-Description=MQ Sync Service
-
-[Service]
-ExecStart=/path/to/mq_sync.sh
