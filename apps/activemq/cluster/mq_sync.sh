@@ -23,8 +23,8 @@ fi
 
 command -v rclone >/dev/null 2>&1 || { echo >&2 "rclone is required but it's not installed.  Aborting."; exit 1; }
 
-# 使用 rclone 同步数据
-rclone --config rclone.conf sync \
+
+rclone --config $(dirname "$0")/rclone.conf sync \
     --log-file=$(dirname "$0")/sync.log \
     --log-level INFO \
     remote:$server_path  $backup_path
