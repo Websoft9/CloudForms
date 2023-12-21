@@ -3,7 +3,7 @@ Description=Runs mq_sync every second
 
 [Timer]
 OnUnitActiveSec=1s
-Unit=mq_sync.service
+Unit=rclone-sync.service
 
 [Install]
 WantedBy=timers.target
