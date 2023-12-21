@@ -3,7 +3,7 @@
 1. Git this project and install rclone
   ```
   git clone https://github.com/Websoft9/terraform-library
-  cd terraform-library/activemq/cluster
+  cd terraform-library/apps/activemq/cluster
   sudo -v ; curl https://rclone.org/install.sh | sudo bash
   ```
 
