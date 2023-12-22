@@ -1,5 +1,11 @@
 # Readme
 
+## What this?
+
+This is a automatic backup solution for ActiveMQ, it can sync **Data directory** between your Master node and Slave Node.
+
+## How to use?
+
 1. Git this project and install rclone
   ```
   git clone https://github.com/Websoft9/terraform-library && cd terraform-library/apps/activemq/cluster && sudo -v ; curl https://rclone.org/install.sh | sudo bash
