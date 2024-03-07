@@ -1,14 +1,24 @@
 ROSTemplateFormatVersion: '2015-09-01'
-Description: 创建openshift基本资源：VPC/EIP/SG/OSS
+Description: 创建openshift基本资源：VPC/VSW/EIP/NAT/OSS/SG
 Parameters:
-  VpcId:
-    Type: String
-    Default: Null
-    AssociationProperty: ALIYUN::ECS::VPC::VPCId
+  VpcCidrBlock:
+    AssociationPropertyMetadata:
+      RecommendDescription:
+        zh-cn: 您可以选择以下值进行快速设置。
+      RecommendValues:
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+        - 192.168.0.0/16
     Description:
-      zh-cn: 控制台-VPC-专有网络下查询
+      zh-cn: >-
+        专有网络IP地址段范围，推荐使用：
+        <font color='green'>[10.0.0.0/8]</font> <font color='green'>[172.16.0.0/12]</font> <font color='green'>[192.168.0.0/16]</font>
+    Default: 172.16.0.0/12
+    Required: true
     Label:
-      zh-cn: 现有VPC的实例ID
+      zh-cn: 专有网络网段
+    AssociationProperty: RecommendInput
+    Type: String
   EIPInternetChargeType:
     Type: String
     AllowedValues:
@@ -24,7 +34,6 @@ Parameters:
     Description:
       zh-cn: 弹性公网带宽取值范围：<font color='green'>1~200</font>， 单位：<font color='green'>Mbps</font>。
     Label:
-      en: EIP Bandwidth
       zh-cn: 弹性公网带宽
     MinValue: 1
     MaxValue: 200
@@ -56,10 +65,10 @@ Parameters:
         - 192.168.0.0/24
     Description:
       zh-cn: 建议交换机的网段：10.0.0.0/24，172.16.0.0/24，192.168.0.0/24。必须是所属专有网络的子网段，并且没有被其他交换机占用。
-    Default: 172.17.0.0/24
+    Default: 172.16.0.0/24
     Required: true
     Label:
-      zh-cn: 公网交换机网段
+      zh-cn: 交换机网段1
     AssociationProperty: RecommendInput
     Type: String
   VSwitchName1:
@@ -69,6 +78,102 @@ Parameters:
       zh-cn: 交换机名称，长度为2~128
     Label:
       zh-cn: 交换机名称
+  ZoneId2:
+    AssociationProperty: ZoneId
+    Required: true
+    Type: String
+    Description:
+      zh-cn: 可用区2
+    Label:
+      zh-cn: 可用区ID
+  CidrBlock2:
+    AssociationPropertyMetadata:
+      RecommendDescription:
+        zh-cn: 您可以选择以下值进行快速设置。
+      RecommendValues:
+        - 10.0.1.0/24
+        - 172.16.1.0/24
+        - 192.168.1.0/24
+    Description:
+      zh-cn: 建议交换机的网段：10.0.1.0/24，172.16.1.0/24，192.168.1.0/24。必须是所属专有网络的子网段，并且没有被其他交换机占用。
+    Default: 172.16.1.0/24
+    Required: true
+    Label:
+      zh-cn: 交换机网段2
+    AssociationProperty: RecommendInput
+    Type: String
+  VSwitchName2:
+    Default: vsw-openshift-2
+    Type: String
+    Description:
+      zh-cn: 交换机名称，长度为2~128
+    Label:
+      zh-cn: 交换机名称
+  ZoneId3:
+    AssociationProperty: ZoneId
+    Required: true
+    Type: String
+    Description:
+      zh-cn: 可用区3
+    Label:
+      zh-cn: 可用区ID
+  CidrBlock3:
+    AssociationPropertyMetadata:
+      RecommendDescription:
+        zh-cn: 您可以选择以下值进行快速设置。
+      RecommendValues:
+        - 10.0.2.0/24
+        - 172.16.2.0/24
+        - 192.168.2.0/24
+    Description:
+      zh-cn: 建议交换机的网段：10.0.2.0/24，172.16.2.0/24，192.168.2.0/24。必须是所属专有网络的子网段，并且没有被其他交换机占用。
+    Default: 172.16.2.0/24
+    Required: true
+    Label:
+      zh-cn: 交换机网段3
+    AssociationProperty: RecommendInput
+    Type: String
+  VSwitchName3:
+    Default: vsw-openshift-3
+    Type: String
+    Description:
+      zh-cn: 交换机名称，长度为2~128
+    Label:
+      zh-cn: 交换机名称
+  NATInternetChargeType:
+    AssociationPropertyMetadata:
+      LocaleKey: InternetChargeType
+    Description:
+      zh-cn: NAT网关计费类型
+    Default: PayByLcu
+    Required: false
+    Label:
+      zh-cn: NAT网关的计费类型
+    AllowedValues:
+      - PayByLcu
+      - PayBySpec
+    Type: String
+  NatGatewayName1:
+    Default: nat-openshift-public1
+    Required: false
+    Type: String
+    Description:
+      zh-cn: NAT网关的名称，长度为2~128
+    Label:
+      zh-cn: NAT网关的名称
+  NetworkType1:
+    AssociationPropertyMetadata:
+      LocaleKey: NatGatewayNetworkType
+    Description:
+      zh-cn: NAT网关的网络类型
+    Default: internet
+    Required: false
+    Label:
+      zh-cn: NAT网关的网络类型
+    AllowedValues:
+      - internet
+      - intranet
+    Type: String
   BucketName:
     Type: String
     Label:
@@ -97,9 +202,9 @@ Metadata:
   ALIYUN::ROS::Interface:
     ParameterGroups:
       - Parameters:
-          - VpcId
+          - VpcCidrBlock
         Label:
-          default: '专有网络 VPC '
+          default: 专有网络 VPC
       - Parameters:
           - EIPCount
           - EIPBandwidth
@@ -111,7 +216,30 @@ Metadata:
           - CidrBlock1
           - VSwitchName1
         Label:
-          default: 创建交换机(可用区1)
+          default: 交换机(可用区1)
+      - Parameters:
+          - ZoneId2
+          - CidrBlock2
+          - VSwitchName2
+        Label:
+          default:
+            zh-cn: 交换机(可用区2)
+      - Parameters:
+          - ZoneId3
+          - CidrBlock3
+          - VSwitchName3
+        Label:
+          default:
+            zh-cn: 交换机(可用区3)
+      - Parameters:
+          - NatGatewayName1
+          - NATInternetChargeType
+          - VpcId
+          - VSwitch1
+          - NetworkType1
+        Label:
+          default:
+            zh-cn: 公网网关 NAT
       - Parameters:
           - BucketName
           - AccessControl
@@ -124,7 +252,7 @@ Metadata:
           default:
             zh-cn: 创建安全组 SG
     TemplateTags:
-      - Openshift,VPC,EIP,SG,OSS
+      - Openshift,VPC,EIP,NAT,OSS,SG
 Mappings: 
 Conditions: 
 Outputs:
@@ -134,12 +262,37 @@ Outputs:
       Fn::GetAtt:
         - ElasticIp
         - EipAddress
+  ForwardTableId1:
+    Description: The forward table id.
+    Value:
+      'Fn::GetAtt':
+        - NatGateway1
+        - ForwardTableId
+  SNatTableId1:
+    Description: The SNAT table id.
+    Value:
+      'Fn::GetAtt':
+        - NatGateway1
+        - SNatTableId
+  NatGatewayId1:
+    Description: The Id of created NAT gateway.
+    Value:
+      'Fn::GetAtt':
+        - NatGateway1
+        - NatGatewayId
   BucketDomainName:
     Value:
       Fn::GetAtt:
         - MyBucket
         - DomainName
 Resources:
+  Vpc:
+    Type: 'ALIYUN::ECS::VPC'
+    Properties:
+      CidrBlock:
+        Ref: VpcCidrBlock
+      VpcName:
+        Ref: 'ALIYUN::StackName'
   ElasticIp:
     Type: ALIYUN::VPC::EIP
     Count:
@@ -155,11 +308,46 @@ Resources:
       VSwitchName:
         Ref: VSwitchName1
       VpcId:
-        Ref: VpcId
+        Ref: Vpc
       ZoneId:
         Ref: ZoneId1
       CidrBlock:
         Ref: CidrBlock1
+  VSwitch2:
+    Type: ALIYUN::ECS::VSwitch
+    Properties:
+      VSwitchName:
+        Ref: VSwitchName2
+      VpcId:
+        Ref: Vpc
+      ZoneId:
+        Ref: ZoneId2
+      CidrBlock:
+        Ref: CidrBlock2
+  VSwitch3:
+    Type: ALIYUN::ECS::VSwitch
+    Properties:
+      VSwitchName:
+        Ref: VSwitchName3
+      VpcId:
+        Ref: Vpc
+      ZoneId:
+        Ref: ZoneId3
+      CidrBlock:
+        Ref: CidrBlock3
+  NatGateway1:
+    Type: 'ALIYUN::VPC::NatGateway'
+    Properties:
+      VpcId:
+        Ref: Vpc
+      InternetChargeType:
+        Ref: NATInternetChargeType
+      NatGatewayName:
+        Ref: NatGatewayName1
+      NetworkType:
+        Ref: NetworkType1
+      VSwitchId:
+        Ref: VSwitch1
   MyBucket:
     Type: ALIYUN::OSS::Bucket
     Properties:
@@ -169,145 +357,117 @@ Resources:
     Type: ALIYUN::ECS::SecurityGroup
     Properties:
       VpcId:
-        Ref: VpcId
+        Ref: Vpc
       SecurityGroupName:
         Ref: SecurityGroupMasterName
       SecurityGroupIngress:
         - PortRange: 22/22
-          Priority: 1
+          IpProtocol: tcp
           SourceCidrIp: 100.104.0.0/16
-          IpProtocol: tcp
-          NicType: internet
         - PortRange: 22/22
-          Priority: 1
-          SourceCidrIp: 10.10.0.0/16
           IpProtocol: tcp
-          NicType: intranet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 2379/2380
-          Priority: 1
-          SourceCidrIp: 10.10.0.0/16
           IpProtocol: tcp
-          NicType: intranet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 6641/6642
-          Priority: 1
-          SourceCidrIp: 10.10.0.0/16
           IpProtocol: tcp
-          NicType: intranet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 6443/6443
-          Priority: 1
-          SourceCidrIp: 10.10.0.0/16
           IpProtocol: tcp
-          NicType: intranet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 9000/9999
-          Priority: 1
-          SourceCidrIp: 10.10.0.0/16
           IpProtocol: tcp
-          NicType: intranet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 10257/10257
-          Priority: 1
-          SourceCidrIp: 10.10.0.0/16
           IpProtocol: tcp
-          NicType: intranet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 10259/10259
-          Priority: 1
-          SourceCidrIp: 10.10.0.0/16
           IpProtocol: tcp
-          NicType: intranet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 22623/22623
-          Priority: 1
-          SourceCidrIp: 10.10.0.0/16
           IpProtocol: tcp
-          NicType: intranet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 30000/32767
-          Priority: 1
-          SourceCidrIp: 10.10.0.0/16
           IpProtocol: tcp
-          NicType: intranet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 500/500
-          Priority: 1
           IpProtocol: udp
-          SourceCidrIp: 10.10.0.0/16
-          NicType: internet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 4500/4500
-          Priority: 1
           IpProtocol: udp
-          SourceCidrIp: 10.10.0.0/16
-          NicType: internet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 4789/4789
-          Priority: 1
           IpProtocol: udp
-          SourceCidrIp: 10.10.0.0/16
-          NicType: internet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 6081/6081
-          Priority: 1
           IpProtocol: udp
-          SourceCidrIp: 10.10.0.0/16
-          NicType: internet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 9000/9999
-          Priority: 1
           IpProtocol: udp
-          SourceCidrIp: 10.10.0.0/16
-          NicType: internet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 30000/32767
-          Priority: 1
           IpProtocol: udp
-          SourceCidrIp: 10.10.0.0/16
-          NicType: internet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
   SecurityGroupWorker:
     Type: ALIYUN::ECS::SecurityGroup
     Properties:
       VpcId:
-        Ref: VpcId
+        Ref: Vpc
       SecurityGroupName:
         Ref: SecurityGroupWorkerName
       SecurityGroupIngress:
         - PortRange: 22/22
-          Priority: 1
+          IpProtocol: tcp
           SourceCidrIp: 100.104.0.0/16
-          IpProtocol: tcp
-          NicType: internet
         - PortRange: 22/22
-          Priority: 1
-          SourceCidrIp: 10.10.0.0/16
           IpProtocol: tcp
-          NicType: intranet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 9000/9999
-          Priority: 1
-          SourceCidrIp: 10.10.0.0/16
           IpProtocol: tcp
-          NicType: intranet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 30000/32767
-          Priority: 1
-          SourceCidrIp: 10.10.0.0/16
           IpProtocol: tcp
-          NicType: intranet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 500/500
-          Priority: 1
           IpProtocol: udp
-          SourceCidrIp: 10.10.0.0/16
-          NicType: internet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 4500/4500
-          Priority: 1
           IpProtocol: udp
-          SourceCidrIp: 10.10.0.0/16
-          NicType: internet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 4789/4789
-          Priority: 1
           IpProtocol: udp
-          SourceCidrIp: 10.10.0.0/16
-          NicType: internet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 6081/6081
-          Priority: 1
           IpProtocol: udp
-          SourceCidrIp: 10.10.0.0/16
-          NicType: internet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 9000/9999
-          Priority: 1
           IpProtocol: udp
-          SourceCidrIp: 10.10.0.0/16
-          NicType: internet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
         - PortRange: 30000/32767
-          Priority: 1
           IpProtocol: udp
-          SourceCidrIp: 10.10.0.0/16
-          NicType: internet
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
