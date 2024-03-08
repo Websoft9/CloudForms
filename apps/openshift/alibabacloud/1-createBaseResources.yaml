@@ -1,3 +1,45 @@
+Outputs:
+  EipAddress:
+    Description: IP address of created EIP.
+    Value:
+      Fn::GetAtt:
+        - ElasticIp
+        - EipAddress
+  ForwardTableId1:
+    Description: The forward table id.
+    Value:
+      'Fn::GetAtt':
+        - NatGateway1
+        - ForwardTableId
+  SNatTableId1:
+    Description: The SNAT table id.
+    Value:
+      'Fn::GetAtt':
+        - NatGateway1
+        - SNatTableId
+  NatGatewayId1:
+    Description: The Id of created NAT gateway.
+    Value:
+      'Fn::GetAtt':
+        - NatGateway1
+        - NatGatewayId
+  ZoneMappings1:
+    Description: 'The zones, vSwitches and addresses which are mapped to the zones.'
+    Value:
+      'Fn::GetAtt':
+        - LoadBalancer1
+        - ZoneMappings
+  DNSName1:
+    Description: The domain name of the NLB instance.
+    Value:
+      'Fn::GetAtt':
+        - LoadBalancer1
+        - DNSName
+  BucketDomainName:
+    Value:
+      Fn::GetAtt:
+        - MyBucket
+        - DomainName
 ROSTemplateFormatVersion: '2015-09-01'
 Description: 创建openshift基本资源：VPC/VSW/EIP/NAT/OSS/SG
 Parameters:
@@ -161,7 +203,23 @@ Parameters:
       zh-cn: NAT网关的名称，长度为2~128
     Label:
       zh-cn: NAT网关的名称
-  NetworkType1:
+  NatGatewayName2:
+    Default: nat-openshift-public2
+    Required: false
+    Type: String
+    Description:
+      zh-cn: NAT网关的名称，长度为2~128
+    Label:
+      zh-cn: NAT网关的名称
+  NatGatewayName3:
+    Default: nat-openshift-public3
+    Required: false
+    Type: String
+    Description:
+      zh-cn: NAT网关的名称，长度为2~128
+    Label:
+      zh-cn: NAT网关的名称
+  NetworkType:
     AssociationPropertyMetadata:
       LocaleKey: NatGatewayNetworkType
     Description:
@@ -174,6 +232,210 @@ Parameters:
       - internet
       - intranet
     Type: String
+  ZoneMappings1:
+    AssociationPropertyMetadata:
+      Parameter:
+        Default: null
+        AssociationPropertyMetadata:
+          Parameters:
+            LoadBalancerAddresses:
+              AssociationPropertyMetadata:
+                Parameters:
+                  PrivateIPv4Address:
+                    Default: null
+                    Required: false
+                    Type: String
+                    Description:
+                      zh-cn: The private IP address.
+                  AllocationId:
+                    Required: true
+                    Type: String
+                    Description:
+                      zh-cn: The ID of the elastic IP address. 
+              Description:
+                zh-cn: Load balancer addresses.
+              Default: null
+              Required: false
+              Label:
+                zh-cn: 负载均衡器地址
+              MaxLength: 1
+              AssociationProperty: 'List[Parameters]'
+              Type: Json
+            PrivateIPv4Address:
+              Default: null
+              Required: false
+              Type: String
+              Description:
+                zh-cn: IPv4地址
+              Label:
+                zh-cn: IPv4地址
+            ZoneId:
+              AssociationProperty: ZoneId
+              Required: true
+              Type: String
+              Description:
+                zh-cn: 负载均衡实例的可用区ID
+              Label:
+                zh-cn: 负载均衡实例的可用区ID
+            VSwitchId:
+              AssociationPropertyMetadata:
+                VpcId: '${VpcId}'
+                ZoneId: '${ZoneId}'
+              Description:
+                zh-cn: 可用区对应的交换机
+              Required: true
+              Label:
+                zh-cn: 可用区对应的交换机
+              AssociationProperty: 'ALIYUN::VPC::VSwitch::VSwitchId'
+              Type: String
+            EipType:
+              Default: null
+              Required: false
+              Type: String
+              Description:
+                zh-cn: 公网EIP的类型
+              Label:
+                zh-cn: 公网EIP的类型
+            AllocationId:
+              Default: null
+              Required: false
+              Type: String
+              Description:
+                zh-cn: 弹性公网IP的实例ID 
+              Label:
+                zh-cn: 弹性公网IP的实例ID
+        Required: false
+        Type: Json
+    Description:
+      zh-cn: 可用区及交换机映射列表
+    MinLength: 2
+    Required: true
+    Label:
+      zh-cn: 可用区及交换机映射列表
+    MaxLength: 3
+    AssociationProperty: 'List[Parameter]'
+    Type: Json
+  AddressType1:
+    Required: true
+    Type: String
+    Description:
+      zh-cn: 负载均衡IPv4的网络地址类型
+    AllowedValues:
+      - Internet
+      - Intranet
+    Label:
+      zh-cn: 负载均衡IPv4的网络地址类型
+    Default: Internet
+  LoadBalancerName1:
+    Default: null
+    Required: false
+    Type: String
+    Description:
+      zh-cn: 公网负载均衡实例的名称
+    Label:
+      zh-cn: 公网负载均衡实例的名称
+  ZoneMappings2:
+    AssociationPropertyMetadata:
+      Parameter:
+        Default: null
+        AssociationPropertyMetadata:
+          Parameters:
+            LoadBalancerAddresses:
+              AssociationPropertyMetadata:
+                Parameters:
+                  PrivateIPv4Address:
+                    Default: null
+                    Required: false
+                    Type: String
+                    Description:
+                      zh-cn: The private IP address.
+                  AllocationId:
+                    Required: true
+                    Type: String
+                    Description:
+                      zh-cn: The ID of the elastic IP address. 
+              Description:
+                zh-cn: Load balancer addresses.
+              Default: null
+              Required: false
+              Label:
+                zh-cn: 负载均衡器地址
+              MaxLength: 1
+              AssociationProperty: 'List[Parameters]'
+              Type: Json
+            PrivateIPv4Address:
+              Default: null
+              Required: false
+              Type: String
+              Description:
+                zh-cn: IPv4地址
+              Label:
+                zh-cn: IPv4地址
+            ZoneId:
+              AssociationProperty: ZoneId
+              Required: true
+              Type: String
+              Description:
+                zh-cn: 负载均衡实例的可用区ID
+              Label:
+                zh-cn: 负载均衡实例的可用区ID
+            VSwitchId:
+              AssociationPropertyMetadata:
+                VpcId: '${Vpc}'
+                ZoneId: '${ZoneId}'
+              Description:
+                zh-cn: 可用区对应的交换机
+              Required: true
+              Label:
+                zh-cn: 可用区对应的交换机
+              AssociationProperty: 'ALIYUN::VPC::VSwitch::VSwitchId'
+              Type: String
+            EipType:
+              Default: null
+              Required: false
+              Type: String
+              Description:
+                zh-cn: 公网EIP的类型
+              Label:
+                zh-cn: 公网EIP的类型
+            AllocationId:
+              Default: null
+              Required: false
+              Type: String
+              Description:
+                zh-cn: 弹性公网IP的实例ID 
+              Label:
+                zh-cn: 弹性公网IP的实例ID
+        Required: false
+        Type: Json
+    Description:
+      zh-cn: 可用区及交换机映射列表
+    MinLength: 2
+    Required: true
+    Label:
+      zh-cn: 可用区及交换机映射列表
+    MaxLength: 3
+    AssociationProperty: 'List[Parameter]'
+    Type: Json
+  AddressType2:
+    Required: true
+    Type: String
+    Description:
+      zh-cn: 负载均衡IPv4的网络地址类型
+    AllowedValues:
+      - Internet
+      - Intranet
+    Label:
+      zh-cn: 负载均衡IPv4的网络地址类型
+    Default: Intranet
+  LoadBalancerName2:
+    Default: null
+    Required: false
+    Type: String
+    Description:
+      zh-cn: 私网负载均衡实例的名称
+    Label:
+      zh-cn: 私网负载均衡实例的名称
   BucketName:
     Type: String
     Label:
@@ -198,93 +460,8 @@ Parameters:
     Label:
       zh-cn: 工作节点安全组名称
     Default: sg-openshift-worker
-Metadata:
-  ALIYUN::ROS::Interface:
-    ParameterGroups:
-      - Parameters:
-          - VpcCidrBlock
-        Label:
-          default: 专有网络 VPC
-      - Parameters:
-          - EIPCount
-          - EIPBandwidth
-          - EIPInternetChargeType
-        Label:
-          default: 弹性公网 EIP
-      - Parameters:
-          - ZoneId1
-          - CidrBlock1
-          - VSwitchName1
-        Label:
-          default: 交换机(可用区1)
-      - Parameters:
-          - ZoneId2
-          - CidrBlock2
-          - VSwitchName2
-        Label:
-          default:
-            zh-cn: 交换机(可用区2)
-      - Parameters:
-          - ZoneId3
-          - CidrBlock3
-          - VSwitchName3
-        Label:
-          default:
-            zh-cn: 交换机(可用区3)
-      - Parameters:
-          - NatGatewayName1
-          - NATInternetChargeType
-          - VpcId
-          - VSwitch1
-          - NetworkType1
-        Label:
-          default:
-            zh-cn: 公网网关 NAT
-      - Parameters:
-          - BucketName
-          - AccessControl
-        Label:
-          default: 对象存储 OSS
-      - Parameters:
-          - SecurityGroupMasterName
-          - SecurityGroupWorkerName
-        Label:
-          default:
-            zh-cn: 创建安全组 SG
-    TemplateTags:
-      - Openshift,VPC,EIP,NAT,OSS,SG
 Mappings: 
 Conditions: 
-Outputs:
-  EipAddress:
-    Description: IP address of created EIP.
-    Value:
-      Fn::GetAtt:
-        - ElasticIp
-        - EipAddress
-  ForwardTableId1:
-    Description: The forward table id.
-    Value:
-      'Fn::GetAtt':
-        - NatGateway1
-        - ForwardTableId
-  SNatTableId1:
-    Description: The SNAT table id.
-    Value:
-      'Fn::GetAtt':
-        - NatGateway1
-        - SNatTableId
-  NatGatewayId1:
-    Description: The Id of created NAT gateway.
-    Value:
-      'Fn::GetAtt':
-        - NatGateway1
-        - NatGatewayId
-  BucketDomainName:
-    Value:
-      Fn::GetAtt:
-        - MyBucket
-        - DomainName
 Resources:
   Vpc:
     Type: 'ALIYUN::ECS::VPC'
@@ -345,9 +522,46 @@ Resources:
       NatGatewayName:
         Ref: NatGatewayName1
       NetworkType:
-        Ref: NetworkType1
+        Ref: NetworkType
       VSwitchId:
         Ref: VSwitch1
+  NatGateway2:
+    Type: 'ALIYUN::VPC::NatGateway'
+    Properties:
+      VpcId:
+        Ref: Vpc
+      InternetChargeType:
+        Ref: NATInternetChargeType
+      NatGatewayName:
+        Ref: NatGatewayName2
+      NetworkType:
+        Ref: NetworkType
+      VSwitchId:
+        Ref: VSwitch2
+  NatGateway3:
+    Type: 'ALIYUN::VPC::NatGateway'
+    Properties:
+      VpcId:
+        Ref: Vpc
+      InternetChargeType:
+        Ref: NATInternetChargeType
+      NatGatewayName:
+        Ref: NatGatewayName3
+      NetworkType:
+        Ref: NetworkType
+      VSwitchId:
+        Ref: VSwitch3
+  LoadBalancer1:
+    Type: ALIYUN::NLB::LoadBalancer
+    Properties:
+      AddressType:
+        Ref: AddressType1
+      VpcId:
+        Ref: Vpc
+      ZoneMappings:
+        Ref: ZoneMappings1
+      LoadBalancerName:
+        Ref: LoadBalancerName1
   MyBucket:
     Type: ALIYUN::OSS::Bucket
     Properties:
@@ -471,3 +685,65 @@ Resources:
           IpProtocol: udp
           SourceCidrIp: 
             Ref: VpcCidrBlock
+Metadata:
+  ALIYUN::ROS::Interface:
+    ParameterGroups:
+      - Parameters:
+          - VpcCidrBlock
+        Label:
+          default: 专有网络 VPC
+      - Parameters:
+          - EIPCount
+          - EIPBandwidth
+          - EIPInternetChargeType
+        Label:
+          default: 弹性公网 EIP
+      - Parameters:
+          - ZoneId1
+          - CidrBlock1
+          - VSwitchName1
+        Label:
+          default: 交换机(可用区1)
+      - Parameters:
+          - ZoneId2
+          - CidrBlock2
+          - VSwitchName2
+        Label:
+          default:
+            zh-cn: 交换机(可用区2)
+      - Parameters:
+          - ZoneId3
+          - CidrBlock3
+          - VSwitchName3
+        Label:
+          default:
+            zh-cn: 交换机(可用区3)
+      - Parameters:
+          - NetworkType
+          - NatGatewayName1
+          - NatGatewayName2
+          - NatGatewayName3
+          - NATInternetChargeType
+        Label:
+          default:
+            zh-cn: 公网网关 NAT
+      - Parameters:
+          - LoadBalancerName1
+          - AddressType1
+          - ZoneMappings1
+        Label:
+          default:
+            zh-cn: 负载均衡 NLB
+      - Parameters:
+          - BucketName
+          - AccessControl
+        Label:
+          default: 对象存储 OSS
+      - Parameters:
+          - SecurityGroupMasterName
+          - SecurityGroupWorkerName
+        Label:
+          default:
+            zh-cn: 创建安全组 SG
+    TemplateTags:
+      - Openshift,VPC,EIP,NAT,OSS,SG
