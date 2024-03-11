@@ -29,11 +29,23 @@ Outputs:
       'Fn::GetAtt':
         - LoadBalancer1
         - ZoneMappings
+  ZoneMappings1:
+    Description: 'The zones, vSwitches and addresses which are mapped to the zones.'
+    Value:
+      'Fn::GetAtt':
+        - LoadBalancer2
+        - ZoneMappings
   DNSName1:
     Description: The domain name of the NLB instance.
     Value:
       'Fn::GetAtt':
         - LoadBalancer1
+        - DNSName
+  DNSName2:
+    Description: The domain name of the NLB instance.
+    Value:
+      'Fn::GetAtt':
+        - LoadBalancer2
         - DNSName
   BucketDomainName:
     Value:
@@ -327,7 +339,7 @@ Parameters:
       zh-cn: 负载均衡IPv4的网络地址类型
     Default: Internet
   LoadBalancerName1:
-    Default: null
+    Default: nlb-openshift-public
     Required: false
     Type: String
     Description:
@@ -429,7 +441,7 @@ Parameters:
       zh-cn: 负载均衡IPv4的网络地址类型
     Default: Intranet
   LoadBalancerName2:
-    Default: null
+    Default: nlb-openshift-private
     Required: false
     Type: String
     Description:
@@ -562,6 +574,17 @@ Resources:
         Ref: ZoneMappings1
       LoadBalancerName:
         Ref: LoadBalancerName1
+  LoadBalancer2:
+    Type: ALIYUN::NLB::LoadBalancer
+    Properties:
+      AddressType:
+        Ref: AddressType2
+      VpcId:
+        Ref: Vpc
+      ZoneMappings:
+        Ref: ZoneMappings2
+      LoadBalancerName:
+        Ref: LoadBalancerName2
   MyBucket:
     Type: ALIYUN::OSS::Bucket
     Properties:
@@ -731,6 +754,9 @@ Metadata:
           - LoadBalancerName1
           - AddressType1
           - ZoneMappings1
+          - LoadBalancerName2
+          - AddressType2
+          - ZoneMappings2
         Label:
           default:
             zh-cn: 负载均衡 NLB
