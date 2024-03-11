@@ -2,7 +2,7 @@
 
 1. 注册域名并认证
 2. 使用 ROS 模板创建云资源：ECS 服务器、域名、NAT 网关、VPC等
-3. 用域名和准备的公钥去 Redhat 官网(consol.redhat.com)去获取 ISO 镜像
+3. 用域名和准备的公钥（ssh-keygen 生成即可）去 Redhat 官网(consol.redhat.com)去获取 ISO 镜像
 4. 将 ISO 转换 qcow2 格式，再制作成阿里云的自定义镜像
 5. 将ECS服务镜像更换成自定义镜像
 6. 在 Redhat 官网(consol.redhat.com)配置 master/worker 节点后安装集群
