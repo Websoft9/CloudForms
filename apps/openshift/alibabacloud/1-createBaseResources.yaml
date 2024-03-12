@@ -472,6 +472,112 @@ Parameters:
     Label:
       zh-cn: 工作节点安全组名称
     Default: sg-openshift-worker
+  PayType:
+    Type: String
+    Label:
+      zh-cn: 付费类型
+    AssociationProperty: ChargeType
+    AssociationPropertyMetadata:
+      LocaleKey: InstanceChargeType
+    Default: PostPaid
+    AllowedValues:
+      - PostPaid
+      - PrePaid
+  PayPeriodUnit:
+    Type: String
+    Label:
+      zh-cn: 购买资源时长周期
+    AssociationProperty: PayPeriodUnit
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          'Fn::Not':
+            'Fn::Equals':
+              - '${PayType}'
+              - PostPaid
+    Default: Month
+    AllowedValues:
+      - Month
+      - Year
+  PayPeriod:
+    Type: Number
+    Label:
+      zh-cn: 购买资源时长
+    AssociationProperty: PayPeriod
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          'Fn::Not':
+            'Fn::Equals':
+              - '${PayType}'
+              - PostPaid
+    Default: 1
+    AllowedValues:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+  DiskSize:
+    Type: Number
+    Label:
+      zh-cn: 磁盘容量(GB)
+    Default: 100
+  EcsInstanceType1:
+    Type: String
+    Label:
+      zh-cn: 实例类型
+    AssociationProperty: 'ALIYUN::ECS::Instance::InstanceType'
+    AssociationPropertyMetadata:
+      ZoneId: 
+        Ref: ZoneId1
+      InstanceChargeType: '${InstanceChargeType}'
+  InstanceName1:
+    Type: String
+    Description:
+      zh-cn: 控制节点实例名称1
+    Label:
+      zh-cn: 实例名称
+    Default: ocp-master-1
+  InstanceName2:
+    Type: String
+    Description:
+      zh-cn: 工作节点实例名称1
+    Label:
+      zh-cn: 实例名称
+    Default: ocp-worker-1
+  InstanceName3:
+    Type: String
+    Description:
+      zh-cn: 控制节点实例名称2
+    Label:
+      zh-cn: 实例名称
+    Default: ocp-master-2
+  InstanceName4:
+    Type: String
+    Description:
+      zh-cn: 工作节点实例名称2
+    Label:
+      zh-cn: 实例名称
+    Default: ocp-worker-2
+  InstanceName5:
+    Type: String
+    Description:
+      zh-cn: 控制节点实例名称3
+    Label:
+      zh-cn: 实例名称
+    Default: ocp-master-3
+  InstanceName6:
+    Type: String
+    Description:
+      zh-cn: 工作节点实例名称3
+    Label:
+      zh-cn: 实例名称
+    Default: ocp-worker-3
 Mappings: 
 Conditions: 
 Resources:
@@ -771,5 +877,12 @@ Metadata:
         Label:
           default:
             zh-cn: 创建安全组 SG
+      - Parameters:
+          - DiskSize
+          - SystemDiskCategory
+          - DataDiskCategory
+        Label:
+          default:
+            zh-cn: 弹性计算 ECS
     TemplateTags:
       - Openshift,VPC,EIP,NAT,OSS,SG
