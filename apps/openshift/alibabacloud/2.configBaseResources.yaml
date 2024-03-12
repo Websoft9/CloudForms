@@ -1,0 +1,286 @@
+Outputs:
+ROSTemplateFormatVersion: '2015-09-01'
+Description: 配置open域名解析、工作组、健康检查、监听等
+Parameters:
+  ClusterName:
+    Required: true
+    Type: String
+    Description:
+      zh-cn: 在Redhat控制台申请的Openshift集群的名称
+    Label:
+      zh-cn: 集群名称
+    Default: ocp
+  DnsType:
+    AssociationPropertyMetadata:
+      ValueLabelMapping:
+        A:
+          zh-cn: A——将域名指向一个IPV4地址
+        NS:
+          zh-cn: NS——将子域名指定其他DNS服务器解析
+        FORWARD_URL:
+          zh-cn: 隐性URL——与显性URL类似，但是会隐藏真实目标地址
+        AAAA:
+          zh-cn: AAAA——将域名指向一个IPV6地址
+        CNAME:
+          zh-cn: CNAME——将域名指向另外一个域名
+        SRV:
+          zh-cn: SRV——记录提供特定的服务的服务器
+        REDIRECT_URL:
+          zh-cn: 显性URL——将域名重定向到另外一个地址
+        CAA:
+          zh-cn: CAA——CA证书颁发机构授权检验
+        TXT:
+          zh-cn: TXT——文本长度限制512，通常做SPF记录（反垃圾邮件）
+        MX:
+          zh-cn: MX——将域名指向邮件服务器地址
+      AutoChangeType: false
+    Description:
+      en: 'Parse record type, see parsing record type format'
+    Default: CNAME
+    Required: true
+    AllowedValues:
+      - A
+      - NS
+      - MX
+      - TXT
+      - CNAME
+      - SRV
+      - AAAA
+      - CAA
+      - REDIRECT_URL
+      - FORWARD_URL
+    Label:
+      zh-cn: 解析记录类型
+    Type: String
+  DomainName:
+    Required: true
+    Type: String
+    Description:
+      zh-cn: 待添加公网解析记录的域名
+    Label:
+      zh-cn: 公网解析域名
+    Default: example.com
+  RRPublic1:
+    Required: true
+    Type: String
+    Label:
+      zh-cn: 公网解析记录
+    Default: api.ocp
+  RRPublic2:
+    Required: true
+    Type: String
+    Description:
+      zh-cn: 将'ocp'替换为实际的集群名称
+    Label:
+      zh-cn: 公网解析记录
+    Default: '*.apps.ocp'
+  DomainNamePrivate:
+    Required: true
+    Type: String
+    Description:
+      zh-cn: 待添加内网解析记录的PrivateZone域名
+    Label:
+      zh-cn: 内网解析域名
+    Default: ocp.example.com
+  RRPrivate1:
+    Required: true
+    Type: String
+    Label:
+      zh-cn: 内网解析记录
+    Default: api
+  RRPrivate2:
+    Required: true
+    Type: String
+    Label:
+      zh-cn: 内网解析记录
+    Default: api-int
+  RRPrivate3:
+    Required: true
+    Type: String
+    Description:
+      zh-cn: 将'ocp'替换为实际的集群名称
+    Label:
+      zh-cn: 内网解析记录
+    Default: '*.apps'
+Mappings: 
+Conditions: 
+Resources:
+  DomainRecord1:
+    Type: 'ALIYUN::DNS::DomainRecord'
+    Properties:
+      RR:
+        Ref: RRPublic1
+      DomainName:
+        Ref: DomainName
+      Value:
+        Ref: DNSName1
+      Type:
+        Ref: DnsType
+  DomainRecord2:
+    Type: 'ALIYUN::DNS::DomainRecord'
+    Properties:
+      RR:
+        Ref: RRPublic2
+      DomainName:
+        Ref: DomainName
+      Value:
+        Ref: DNSName1
+      Type:
+        Ref: DnsType
+  DomainRecord3:
+    Type: 'ALIYUN::DNS::DomainRecord'
+    Properties:
+      RR:
+        Ref: RRPrivate1
+      DomainName:
+        Ref: DomainNamePrivate
+      Value:
+        Ref: DNSName2
+      Type:
+        Ref: DnsType
+  DomainRecord4:
+    Type: 'ALIYUN::DNS::DomainRecord'
+    Properties:
+      RR:
+        Ref: RRPrivate2
+      DomainName:
+        Ref: DomainNamePrivate
+      Value:
+        Ref: DNSName2
+      Type:
+        Ref: DnsType
+  DomainRecord5:
+    Type: 'ALIYUN::DNS::DomainRecord'
+    Properties:
+      RR:
+        Ref: RRPrivate3
+      DomainName:
+        Ref: DomainNamePrivate
+      Value:
+        Ref: DNSName2
+      Type:
+        Ref: DnsType
+  SecurityGroupMaster:
+    Type: ALIYUN::ECS::SecurityGroup
+    Properties:
+      VpcId:
+        Ref: Vpc
+      SecurityGroupName:
+        Ref: SecurityGroupMasterName
+      SecurityGroupIngress:
+        - PortRange: 6641/6642
+          IpProtocol: tcp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 9000/9999
+          IpProtocol: tcp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 10250/10250
+          IpProtocol: tcp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 10257/10257
+          IpProtocol: tcp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 10259/10259
+          IpProtocol: tcp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 30000/32767
+          IpProtocol: tcp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 500/500
+          IpProtocol: udp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 4500/4500
+          IpProtocol: udp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 4789/4789
+          IpProtocol: udp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 6081/6081
+          IpProtocol: udp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 9000/9999
+          IpProtocol: udp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 30000/32767
+          IpProtocol: udp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+  SecurityGroupWorker:
+    Type: ALIYUN::ECS::SecurityGroup
+    Properties:
+      VpcId:
+        Ref: Vpc
+      SecurityGroupName:
+        Ref: SecurityGroupWorkerName
+      SecurityGroupIngress:
+        - PortRange: 9000/9999
+          IpProtocol: tcp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 10250/10250
+          IpProtocol: tcp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 30000/32767
+          IpProtocol: tcp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 500/500
+          IpProtocol: udp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 4500/4500
+          IpProtocol: udp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 4789/4789
+          IpProtocol: udp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 6081/6081
+          IpProtocol: udp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 9000/9999
+          IpProtocol: udp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+        - PortRange: 30000/32767
+          IpProtocol: udp
+          SourceCidrIp: 
+            Ref: VpcCidrBlock
+Metadata:
+  ALIYUN::ROS::Interface:
+    ParameterGroups:
+      - Parameters:
+          - ClusterName
+          - DnsType
+          - DomainName
+          - RRPublic1
+          - RRPublic2
+          - DomainNamePrivate
+          - RRPrivate1
+          - RRPrivate2
+          - RRPrivate3
+        Label:
+          default:
+            zh-cn: 域名解析 DNS
+      - Parameters:
+          - SecurityGroupMasterName
+          - SecurityGroupWorkerName
+        Label:
+          default:
+            zh-cn: 创建安全组 SG
+    TemplateTags:
+      - Openshift,VPC,EIP,NAT,OSS,SG

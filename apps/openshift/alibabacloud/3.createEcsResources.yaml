@@ -1,0 +1,244 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Description:
+  zh-cn: 创建ECS组
+Parameters:
+  PayType:
+    Type: String
+    Label:
+      zh-cn: 付费类型
+    AssociationProperty: ChargeType
+    AssociationPropertyMetadata:
+      LocaleKey: InstanceChargeType
+    Default: PostPaid
+    AllowedValues:
+      - PostPaid
+      - PrePaid
+  PayPeriodUnit:
+    Type: String
+    Label:
+      en: Pay Period Unit
+      zh-cn: 购买资源时长周期
+    AssociationProperty: PayPeriodUnit
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          'Fn::Not':
+            'Fn::Equals':
+              - '${PayType}'
+              - PostPaid
+    Default: Month
+    AllowedValues:
+      - Month
+      - Year
+  PayPeriod:
+    Type: Number
+    Label:
+      en: Period
+      zh-cn: 购买资源时长
+    AssociationProperty: PayPeriod
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          'Fn::Not':
+            'Fn::Equals':
+              - '${PayType}'
+              - PostPaid
+    Default: 1
+    AllowedValues:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+  EcsInstanceType:
+    Type: String
+    Label:
+      zh-cn: 实例类型
+    AssociationProperty: 'ALIYUN::ECS::Instance::InstanceType'
+    AssociationPropertyMetadata:
+      ZoneId: '${ZoneId}'
+      InstanceChargeType: '${InstanceChargeType}'
+  ZoneId:
+    Type: String
+    Label:
+      zh-cn: 可用区
+    AssociationProperty: 'ALIYUN::ECS::Instance::ZoneId'
+  VpcId:
+    AssociationProperty: 'ALIYUN::ECS::VPC::VPCId'
+    Type: String
+    Label:
+      zh-cn: 专有网络VPC实例ID
+  VSwitchId:
+    AssociationProperty: 'ALIYUN::ECS::VSwitch::VSwitchId'
+    AssociationPropertyMetadata:
+      VpcId: '${VpcId}'
+      ZoneId: '${ZoneId}'
+    Type: String
+    Label:
+      zh-cn: 交换机实例ID
+  SecurityGroupId:
+    Type: String
+    AssociationProperty: 'ALIYUN::ECS::SecurityGroup::SecurityGroupId'
+    Label:
+      zh-cn: 业务安全组ID
+    AssociationPropertyMetadata:
+      VpcId: '${VpcId}'
+  InstancePassword:
+    Type: String
+    Label:
+      zh-cn: 实例密码
+    Description:
+      zh-cn: >-
+        服务器登录密码,长度8-30，必须包含三项（大写字母、小写字母、数字、 ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/
+        中的特殊符号）
+    ConstraintDescription:
+      zh-cn: '长度8-30，必须包含三项（大写字母、小写字母、数字、 ()`~!@#$%^&*_-+=|{}[]:;''<>,.?/ 中的特殊符号）'
+    AssociationProperty: 'ALIYUN::ECS::Instance::Password'
+    AllowedPattern: '[0-9A-Za-z\_\-\&:;''<>,=%`~!@#\(\)\$\^\*\+\|\{\}\[\]\.\?\/]+$'
+    MinLength: 8
+    MaxLength: 30
+    NoEcho: true
+    Default: 'P@assw0rd'
+  InstanceName:
+    Default: ocp-master-1
+    Type: String
+    Description:
+      zh-cn: 控制节点master-1名称，长度为2~128
+    Label:
+      zh-cn: 主机名称
+  SystemDiskCategory:
+    Type: String
+    Label:
+      en: System Disk Category
+      zh-cn: 系统盘类型
+    AssociationProperty: 'ALIYUN::ECS::Disk::SystemDiskCategory'
+    AssociationPropertyMetadata:
+      LocaleKey: DiskCategory
+      InstanceType: '${EcsInstanceType}'
+    AllowedValues:
+      - cloud_efficiency
+      - cloud_ssd
+      - cloud_essd
+  DataDiskCategory:
+    Type: String
+    Label:
+      zh-cn: 数据盘类型
+      en: Data disk type
+    AssociationProperty: 'ALIYUN::ECS::Disk::DataDiskCategory'
+    AssociationPropertyMetadata:
+      InstanceType: EcsInstanceType
+      ZoneId: ZoneId
+      LocaleKey: DiskCategory
+  DiskSize:
+    Type: Number
+    Label:
+      zh-cn: 系统盘空间 (GB)
+    Default: 100
+Resources:
+  EcsVpc:
+    Type: 'ALIYUN::ECS::VPC'
+    Condition: CreateVpcConditions
+    Properties:
+      CidrBlock:
+        Ref: VpcCidrBlock
+      VpcName:
+        Ref: 'ALIYUN::StackName'
+  EcsVSwitch:
+    Type: 'ALIYUN::ECS::VSwitch'
+    Condition: CreateVpcConditions
+    Properties:
+      ZoneId:
+        Ref: ZoneId
+      VpcId:
+        Ref: EcsVpc
+      CidrBlock:
+        Ref: VSwitchCidrBlock
+  EcsSecurityGroup:
+    Type: 'ALIYUN::ECS::SecurityGroup'
+    Properties:
+      VpcId:
+        'Fn::If':
+          - CreateVpcConditions
+          - Ref: EcsVpc
+          - Ref: VpcId
+  EcsInstanceGroup:
+    Type: 'ALIYUN::ECS::InstanceGroup'
+    Properties:
+      ZoneId:
+        Ref: ZoneId
+      VpcId:
+        'Fn::If':
+          - CreateVpcConditions
+          - Ref: EcsVpc
+          - Ref: VpcId
+      VSwitchId:
+        'Fn::If':
+          - CreateVpcConditions
+          - Ref: EcsVSwitch
+          - Ref: VSwitchId
+      SecurityGroupId:
+        Ref: EcsSecurityGroup
+      ImageId: centos_7
+      IoOptimized: optimized
+      InstanceChargeType:
+        Ref: PayType
+      PeriodUnit:
+        Ref: PayPeriodUnit
+      Period:
+        Ref: PayPeriod
+      SystemDiskCategory:
+        Ref: SystemDiskCategory
+      SystemDiskSize:
+        Ref: DiskSize
+      DiskMappings:
+        - Category:
+            Ref: DataDiskCategory
+          Size:
+            Ref: DataDiskSize
+      MaxAmount: 1
+      InstanceType:
+        Ref: EcsInstanceType
+      Password:
+        Ref: InstancePassword
+      InstanceName:
+        Ref: InstanceName
+Metadata:
+  'ALIYUN::ROS::Interface':
+    ParameterGroups:
+      - Parameters:
+          - PayType
+          - PayPeriodUnit
+          - PayPeriod
+        Label:
+          default:
+            zh-cn: 付费类型配置
+      - Parameters:
+          - EcsInstanceType
+        Label:
+          default:
+            zh-cn: ECS实例规格配置
+      - Parameters:
+          - ZoneId
+        Label:
+          default:
+            zh-cn: 可用区配置
+      - Parameters:
+          - VpcId
+          - VSwitchId
+        Label:
+          default:
+            zh-cn: VPC配置
+      - Parameters:
+          - InstancePassword
+          - SystemDiskCategory
+          - DataDiskCategory
+          - DiskSize
+        Label:
+          default:
+            zh-cn: ECS实例详细配置
+    TemplateTags:
+      - 'acs:example:ISV软件部署:单实例自定义镜像部署带数据盘公网IP可选'
