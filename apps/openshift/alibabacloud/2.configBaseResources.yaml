@@ -2,6 +2,13 @@ Outputs:
 ROSTemplateFormatVersion: '2015-09-01'
 Description: 配置open域名解析、工作组、健康检查、监听等
 Parameters:
+  VpcId:
+    Type: String
+    AssociationProperty: 'ALIYUN::ECS::VPC::VPCId'
+    Description:
+      zh-cn: 控制台-VPC-专有网络下查询
+    Label:
+      zh-cn: 现有VPC的实例ID
   ClusterName:
     Required: true
     Type: String
@@ -10,6 +17,42 @@ Parameters:
     Label:
       zh-cn: 集群名称
     Default: ocp
+  DNSName1:
+    Required: true
+    Type: String
+    Description:
+      zh-cn: 公网负载均衡器的dns名称
+    Label:
+      zh-cn: 公网DNS名称
+    Default: null
+  DNSName2:
+    Required: true
+    Type: String
+    Description:
+      zh-cn: 内网负载均衡器的dns名称
+    Label:
+      zh-cn: 内网DNS名称
+    Default: null
+  SecurityGroupIdMaster:
+    Type: String
+    AssociationProperty: 'ALIYUN::ECS::SecurityGroup::SecurityGroupId'
+    Description:
+      zh-cn: '现有业务安全组的实例ID,控制台-ECS-网络与安全-安全组下查询'
+    Label:
+      zh-cn: 控制节点安全组ID
+    AssociationPropertyMetadata:
+      VpcId: VpcId
+    Default: SelectTheId
+  SecurityGroupIdWorker:
+    Type: String
+    AssociationProperty: 'ALIYUN::ECS::SecurityGroup::SecurityGroupId'
+    Description:
+      zh-cn: '现有业务安全组的实例ID,控制台-ECS-网络与安全-安全组下查询'
+    Label:
+      zh-cn: 工作节点安全组ID
+    AssociationPropertyMetadata:
+      VpcId: VpcId
+    Default: SelectTheId
   DnsType:
     AssociationPropertyMetadata:
       ValueLabelMapping:
@@ -160,106 +203,174 @@ Resources:
         Ref: DNSName2
       Type:
         Ref: DnsType
-  SecurityGroupMaster:
-    Type: ALIYUN::ECS::SecurityGroup
+  SecurityGroupMaster1:
+    Type: 'ALIYUN::ECS::SecurityGroupIngress'
     Properties:
-      VpcId:
-        Ref: Vpc
-      SecurityGroupName:
-        Ref: SecurityGroupMasterName
-      SecurityGroupIngress:
-        - PortRange: 6641/6642
-          IpProtocol: tcp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 9000/9999
-          IpProtocol: tcp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 10250/10250
-          IpProtocol: tcp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 10257/10257
-          IpProtocol: tcp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 10259/10259
-          IpProtocol: tcp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 30000/32767
-          IpProtocol: tcp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 500/500
-          IpProtocol: udp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 4500/4500
-          IpProtocol: udp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 4789/4789
-          IpProtocol: udp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 6081/6081
-          IpProtocol: udp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 9000/9999
-          IpProtocol: udp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 30000/32767
-          IpProtocol: udp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-  SecurityGroupWorker:
-    Type: ALIYUN::ECS::SecurityGroup
+      SecurityGroupId: !Ref SecurityGroupIdMaster
+      PortRange: 6641/6642
+      IpProtocol: tcp
+      SourceGroupId: !Ref SecurityGroupIdWorker
+      NicType: intranet
+  SecurityGroupMaster2:
+    Type: 'ALIYUN::ECS::SecurityGroupIngress'
     Properties:
-      VpcId:
-        Ref: Vpc
-      SecurityGroupName:
-        Ref: SecurityGroupWorkerName
-      SecurityGroupIngress:
-        - PortRange: 9000/9999
-          IpProtocol: tcp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 10250/10250
-          IpProtocol: tcp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 30000/32767
-          IpProtocol: tcp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 500/500
-          IpProtocol: udp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 4500/4500
-          IpProtocol: udp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 4789/4789
-          IpProtocol: udp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 6081/6081
-          IpProtocol: udp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 9000/9999
-          IpProtocol: udp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
-        - PortRange: 30000/32767
-          IpProtocol: udp
-          SourceCidrIp: 
-            Ref: VpcCidrBlock
+      SecurityGroupId: !Ref SecurityGroupIdMaster
+      PortRange: 9000/9999
+      IpProtocol: tcp
+      SourceGroupId: !Ref SecurityGroupIdWorker
+      NicType: intranet
+  SecurityGroupMaster3:
+    Type: 'ALIYUN::ECS::SecurityGroupIngress'
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdMaster
+      PortRange: 10250/10250
+      IpProtocol: tcp
+      SourceGroupId: !Ref SecurityGroupIdWorker
+      NicType: intranet
+  SecurityGroupMaster4:
+    Type: 'ALIYUN::ECS::SecurityGroupIngress'
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdMaster
+      PortRange: 10257/10257
+      IpProtocol: tcp
+      SourceGroupId: !Ref SecurityGroupIdWorker
+      NicType: intranet
+  SecurityGroupMaster5:
+    Type: 'ALIYUN::ECS::SecurityGroupIngress'
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdMaster
+      PortRange: 10259/10259
+      IpProtocol: tcp
+      SourceGroupId: !Ref SecurityGroupIdWorker
+      NicType: intranet
+  SecurityGroupMaster6:
+    Type: 'ALIYUN::ECS::SecurityGroupIngress'
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdMaster
+      PortRange: 30000/32767
+      IpProtocol: tcp
+      SourceGroupId: !Ref SecurityGroupIdWorker
+      NicType: intranet
+  SecurityGroupMaster7:
+    Type: 'ALIYUN::ECS::SecurityGroupIngress'
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdMaster
+      PortRange: 500/500
+      IpProtocol: udp
+      SourceGroupId: !Ref SecurityGroupIdWorker
+      NicType: intranet
+  SecurityGroupMaster8:
+    Type: 'ALIYUN::ECS::SecurityGroupIngress'
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdMaster
+      PortRange: 4500/4500
+      IpProtocol: udp
+      SourceGroupId: !Ref SecurityGroupIdWorker
+      NicType: intranet
+  SecurityGroupMaster9:
+    Type: 'ALIYUN::ECS::SecurityGroupIngress'
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdMaster
+      PortRange: 4789/4789
+      IpProtocol: udp
+      SourceGroupId: !Ref SecurityGroupIdWorker
+      NicType: intranet
+  SecurityGroupMaster10:
+    Type: 'ALIYUN::ECS::SecurityGroupIngress'
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdMaster
+      PortRange: 6081/6081
+      IpProtocol: udp
+      SourceGroupId: !Ref SecurityGroupIdWorker
+      NicType: intranet
+  SecurityGroupMaster11:
+    Type: 'ALIYUN::ECS::SecurityGroupIngress'
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdMaster
+      PortRange: 9000/9999
+      IpProtocol: udp
+      SourceGroupId: !Ref SecurityGroupIdWorker
+      NicType: intranet
+  SecurityGroupMaster12:
+    Type: 'ALIYUN::ECS::SecurityGroupIngress'
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdMaster
+      PortRange: 30000/32767
+      IpProtocol: udp
+      SourceGroupId: !Ref SecurityGroupIdWorker
+      NicType: intranet
+  SecurityGroupWorker1:
+    Type: ALIYUN::ECS::SecurityGroupIngress
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdWorker
+      PortRange: 9000/9999
+      IpProtocol: tcp
+      SourceGroupId: !Ref SecurityGroupIdMaster
+      NicType: intranet
+  SecurityGroupWorker2:
+    Type: ALIYUN::ECS::SecurityGroupIngress
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdWorker
+      PortRange: 10250/10250
+      IpProtocol: tcp
+      SourceGroupId: !Ref SecurityGroupIdMaster
+      NicType: intranet
+  SecurityGroupWorker3:
+    Type: ALIYUN::ECS::SecurityGroupIngress
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdWorker
+      PortRange: 30000/32767
+      IpProtocol: tcp
+      SourceGroupId: !Ref SecurityGroupIdMaster
+      NicType: intranet
+  SecurityGroupWorker4:
+    Type: ALIYUN::ECS::SecurityGroupIngress
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdWorker
+      PortRange: 500/500
+      IpProtocol: udp
+      SourceGroupId: !Ref SecurityGroupIdMaster
+      NicType: intranet
+  SecurityGroupWorker5:
+    Type: ALIYUN::ECS::SecurityGroupIngress
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdWorker
+      PortRange: 4500/4500
+      IpProtocol: udp
+      SourceGroupId: !Ref SecurityGroupIdMaster
+      NicType: intranet
+  SecurityGroupWorker6:
+    Type: ALIYUN::ECS::SecurityGroupIngress
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdWorker
+      PortRange: 4789/4789
+      IpProtocol: udp
+      SourceGroupId: !Ref SecurityGroupIdMaster
+      NicType: intranet
+  SecurityGroupWorker7:
+    Type: ALIYUN::ECS::SecurityGroupIngress
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdWorker
+      PortRange: 6081/6081
+      IpProtocol: udp
+      SourceGroupId: !Ref SecurityGroupIdMaster
+      NicType: intranet
+  SecurityGroupWorker8:
+    Type: ALIYUN::ECS::SecurityGroupIngress
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdWorker
+      PortRange: 9000/9999
+      IpProtocol: udp
+      SourceGroupId: !Ref SecurityGroupIdMaster
+      NicType: intranet
+  SecurityGroupWorker9:
+    Type: ALIYUN::ECS::SecurityGroupIngress
+    Properties:
+      SecurityGroupId: !Ref SecurityGroupIdWorker
+      PortRange: 30000/32767
+      IpProtocol: udp
+      SourceGroupId: !Ref SecurityGroupIdMaster
+      NicType: intranet
 Metadata:
   ALIYUN::ROS::Interface:
     ParameterGroups:
@@ -277,10 +388,10 @@ Metadata:
           default:
             zh-cn: 域名解析 DNS
       - Parameters:
-          - SecurityGroupMasterName
-          - SecurityGroupWorkerName
+          - SecurityGroupIdMaster
+          - SecurityGroupIdWorker
         Label:
           default:
-            zh-cn: 创建安全组 SG
+            zh-cn: 配置安全组 SG
     TemplateTags:
       - Openshift,VPC,EIP,NAT,OSS,SG
