@@ -1,0 +1,509 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Description:
+  zh-cn: 创建openshift服务器资源：master-1~3/worker-1~3
+Parameters:
+  VpcId:
+    AssociationProperty: 'ALIYUN::ECS::VPC::VPCId'
+    Type: String
+    Label:
+      zh-cn: 专有网络VPC实例ID
+  ImageId:
+    AssociationPropertyMetadata:
+      DefaultFilter:
+        OSType: linux
+        ImageName: openshift*
+        ImageOwnerAlias: self
+      InstanceType: '${InstanceType}'
+      SupportedImageOwnerAlias:
+        - system
+        - self
+        - others
+    Description:
+      zh-cn: 镜像ID。包括公共镜像、自定义镜像和云市场镜像。
+    Default: null
+    Required: false
+    Label:
+      zh-cn: 镜像ID
+    AssociationProperty: 'ALIYUN::ECS::Image::ImageId'
+    Type: String
+  PayType:
+    Type: String
+    Label:
+      zh-cn: 付费类型
+    AssociationProperty: ChargeType
+    AssociationPropertyMetadata:
+      LocaleKey: InstanceChargeType
+    Default: PostPaid
+    AllowedValues:
+      - PostPaid
+      - PrePaid
+  PayPeriodUnit:
+    Type: String
+    Label:
+      zh-cn: 购买资源时长周期
+    AssociationProperty: PayPeriodUnit
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          'Fn::Not':
+            'Fn::Equals':
+              - '${PayType}'
+              - PostPaid
+    Default: Month
+    AllowedValues:
+      - Month
+      - Year
+  PayPeriod:
+    Type: Number
+    Label:
+      en: Period
+      zh-cn: 购买资源时长
+    AssociationProperty: PayPeriod
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          'Fn::Not':
+            'Fn::Equals':
+              - '${PayType}'
+              - PostPaid
+    Default: 1
+    AllowedValues:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+  DiskSize:
+    Type: Number
+    Label:
+      zh-cn: 磁盘容量 (GB)
+    Default: 100
+  ZoneId1:
+    Type: String
+    Label:
+      zh-cn: 可用区
+    AssociationProperty: 'ALIYUN::ECS::Instance::ZoneId'
+  ZoneId2:
+    Type: String
+    Label:
+      zh-cn: 可用区
+    AssociationProperty: 'ALIYUN::ECS::Instance::ZoneId'
+  ZoneId3:
+    Type: String
+    Label:
+      zh-cn: 可用区
+    AssociationProperty: 'ALIYUN::ECS::Instance::ZoneId'
+  VSwitchId1:
+    AssociationProperty: 'ALIYUN::ECS::VSwitch::VSwitchId'
+    AssociationPropertyMetadata:
+      VpcId: '${VpcId}'
+      ZoneId: '${ZoneId1}'
+    Type: String
+    Label:
+      zh-cn: 交换机实例ID
+  VSwitchId2:
+    AssociationProperty: 'ALIYUN::ECS::VSwitch::VSwitchId'
+    AssociationPropertyMetadata:
+      VpcId: '${VpcId}'
+      ZoneId: '${ZoneId2}'
+    Type: String
+    Label:
+      zh-cn: 交换机实例ID
+  VSwitchId3:
+    AssociationProperty: 'ALIYUN::ECS::VSwitch::VSwitchId'
+    AssociationPropertyMetadata:
+      VpcId: '${VpcId}'
+      ZoneId: '${ZoneId3}'
+    Type: String
+    Label:
+      zh-cn: 交换机实例ID
+  EcsInstanceType1:
+    Type: String
+    Label:
+      zh-cn: 实例类型
+    AssociationProperty: 'ALIYUN::ECS::Instance::InstanceType'
+    AssociationPropertyMetadata:
+      ZoneId: '${ZoneId1}'
+      InstanceChargeType: '${InstanceChargeType}'
+  EcsInstanceType2:
+    Type: String
+    Label:
+      zh-cn: 实例类型
+    AssociationProperty: 'ALIYUN::ECS::Instance::InstanceType'
+    AssociationPropertyMetadata:
+      ZoneId: '${ZoneId2}'
+      InstanceChargeType: '${InstanceChargeType}'
+  EcsInstanceType3:
+    Type: String
+    Label:
+      zh-cn: 实例类型
+    AssociationProperty: 'ALIYUN::ECS::Instance::InstanceType'
+    AssociationPropertyMetadata:
+      ZoneId: '${ZoneId3}'
+      InstanceChargeType: '${InstanceChargeType}'
+  SystemDiskCategory1:
+    Type: String
+    Label:
+      zh-cn: 系统盘类型
+    AssociationProperty: 'ALIYUN::ECS::Disk::SystemDiskCategory'
+    AssociationPropertyMetadata:
+      LocaleKey: DiskCategory
+      InstanceType: '${EcsInstanceType1}'
+    AllowedValues:
+      - cloud_efficiency
+      - cloud_ssd
+      - cloud_essd
+  SystemDiskCategory2:
+    Type: String
+    Label:
+      zh-cn: 系统盘类型
+    AssociationProperty: 'ALIYUN::ECS::Disk::SystemDiskCategory'
+    AssociationPropertyMetadata:
+      LocaleKey: DiskCategory
+      InstanceType: '${EcsInstanceType2}'
+    AllowedValues:
+      - cloud_efficiency
+      - cloud_ssd
+      - cloud_essd
+  SystemDiskCategory3:
+    Type: String
+    Label:
+      zh-cn: 系统盘类型
+    AssociationProperty: 'ALIYUN::ECS::Disk::SystemDiskCategory'
+    AssociationPropertyMetadata:
+      LocaleKey: DiskCategory
+      InstanceType: '${EcsInstanceType3}'
+    AllowedValues:
+      - cloud_efficiency
+      - cloud_ssd
+      - cloud_essd
+  DataDiskCategory1:
+    Type: String
+    Label:
+      zh-cn: 数据盘类型
+    AssociationProperty: 'ALIYUN::ECS::Disk::DataDiskCategory'
+    AssociationPropertyMetadata:
+      InstanceType: EcsInstanceType1
+      ZoneId: ZoneId1
+      LocaleKey: DiskCategory
+  DataDiskCategory2:
+    Type: String
+    Label:
+      zh-cn: 数据盘类型
+    AssociationProperty: 'ALIYUN::ECS::Disk::DataDiskCategory'
+    AssociationPropertyMetadata:
+      InstanceType: EcsInstanceType2
+      ZoneId: ZoneId2
+      LocaleKey: DiskCategory
+  DataDiskCategory3:
+    Type: String
+    Label:
+      zh-cn: 数据盘类型
+    AssociationProperty: 'ALIYUN::ECS::Disk::DataDiskCategory'
+    AssociationPropertyMetadata:
+      InstanceType: EcsInstanceType3
+      ZoneId: ZoneId3
+      LocaleKey: DiskCategory
+  SecurityGroupId1:
+    Type: String
+    AssociationProperty: 'ALIYUN::ECS::SecurityGroup::SecurityGroupId'
+    Label:
+      zh-cn: 控制节点安全组ID
+    AssociationPropertyMetadata:
+      VpcId: '${VpcId}'
+  SecurityGroupId2:
+    Type: String
+    AssociationProperty: 'ALIYUN::ECS::SecurityGroup::SecurityGroupId'
+    Label:
+      zh-cn: 工作节点安全组ID
+    AssociationPropertyMetadata:
+      VpcId: '${VpcId}'
+  InstanceName1:
+    Default: ocp-master-1
+    Type: String
+    Description:
+      zh-cn: 控制节点master-1名称，长度为2~128
+    Label:
+      zh-cn: 主机名称
+  InstanceName2:
+    Default: ocp-worker-1
+    Type: String
+    Description:
+      zh-cn: 工作节点worker-1名称，长度为2~128
+    Label:
+      zh-cn: 主机名称
+  InstanceName3:
+    Default: ocp-master-2
+    Type: String
+    Description:
+      zh-cn: 控制节点master-2名称，长度为2~128
+    Label:
+      zh-cn: 主机名称
+  InstanceName4:
+    Default: ocp-worker-2
+    Type: String
+    Description:
+      zh-cn: 工作节点worker-2名称，长度为2~128
+    Label:
+      zh-cn: 主机名称
+  InstanceName5:
+    Default: ocp-master-3
+    Type: String
+    Description:
+      zh-cn: 控制节点master-3名称，长度为2~128
+    Label:
+      zh-cn: 主机名称
+  InstanceName6:
+    Default: ocp-worker-3
+    Type: String
+    Description:
+      zh-cn: 工作节点worker-3名称，长度为2~128
+    Label:
+      zh-cn: 主机名称
+Resources:
+  ECSInstance1:
+    Type: 'ALIYUN::ECS::Instance'
+    Properties:
+      VpcId:
+        Ref: VpcId
+      ZoneId:
+        Ref: ZoneId1
+      VSwitchId:
+        Ref: VSwitchId1
+      InstanceChargeType:
+        Ref: PayType
+      PeriodUnit:
+        Ref: PayPeriodUnit
+      Period:
+        Ref: PayPeriod
+      ImageId: 
+        Ref: ImageId
+      InstanceType: 
+        Ref: EcsInstanceType1
+      SecurityGroupId: 
+        Ref: SecurityGroupId1
+      InstanceName: 
+        Ref: InstanceName1
+      SystemDiskCategory:
+        Ref: SystemDiskCategory1
+      SystemDiskSize: 
+        Ref: DiskSize
+      DiskMappings:
+        - Category: 
+            Ref: DataDiskCategory1
+          Size: 
+            Ref: DiskSize
+  ECSInstance2:
+    Type: 'ALIYUN::ECS::Instance'
+    Properties:
+      VpcId:
+        Ref: VpcId
+      ZoneId:
+        Ref: ZoneId1
+      VSwitchId:
+        Ref: VSwitchId1
+      InstanceChargeType:
+        Ref: PayType
+      PeriodUnit:
+        Ref: PayPeriodUnit
+      Period:
+        Ref: PayPeriod
+      ImageId: 
+        Ref: ImageId
+      InstanceType: 
+        Ref: EcsInstanceType1
+      SecurityGroupId: 
+        Ref: SecurityGroupId2
+      InstanceName: 
+        Ref: InstanceName2
+      SystemDiskCategory:
+        Ref: SystemDiskCategory1
+      SystemDiskSize: 
+        Ref: DiskSize
+      DiskMappings:
+        - Category: 
+            Ref: DataDiskCategory1
+          Size: 
+            Ref: DiskSize
+  ECSInstance3:
+    Type: 'ALIYUN::ECS::Instance'
+    Properties:
+      VpcId:
+        Ref: VpcId
+      ZoneId:
+        Ref: ZoneId2
+      VSwitchId:
+        Ref: VSwitchId2
+      InstanceChargeType:
+        Ref: PayType
+      PeriodUnit:
+        Ref: PayPeriodUnit
+      Period:
+        Ref: PayPeriod
+      ImageId: 
+        Ref: ImageId
+      InstanceType: 
+        Ref: EcsInstanceType2
+      SecurityGroupId: 
+        Ref: SecurityGroupId1
+      InstanceName: 
+        Ref: InstanceName3
+      SystemDiskCategory:
+        Ref: SystemDiskCategory2
+      SystemDiskSize: 
+        Ref: DiskSize
+      DiskMappings:
+        - Category: 
+            Ref: DataDiskCategory2
+          Size: 
+            Ref: DiskSize
+  ECSInstance4:
+    Type: 'ALIYUN::ECS::Instance'
+    Properties:
+      VpcId:
+        Ref: VpcId
+      ZoneId:
+        Ref: ZoneId2
+      VSwitchId:
+        Ref: VSwitchId2
+      InstanceChargeType:
+        Ref: PayType
+      PeriodUnit:
+        Ref: PayPeriodUnit
+      Period:
+        Ref: PayPeriod
+      ImageId: 
+        Ref: ImageId
+      InstanceType: 
+        Ref: EcsInstanceType2
+      SecurityGroupId: 
+        Ref: SecurityGroupId2
+      InstanceName: 
+        Ref: InstanceName4
+      SystemDiskCategory:
+        Ref: SystemDiskCategory2
+      SystemDiskSize: 
+        Ref: DiskSize
+      DiskMappings:
+        - Category: 
+            Ref: DataDiskCategory2
+          Size: 
+            Ref: DiskSize
+  ECSInstance5:
+    Type: 'ALIYUN::ECS::Instance'
+    Properties:
+      VpcId:
+        Ref: VpcId
+      ZoneId:
+        Ref: ZoneId3
+      VSwitchId:
+        Ref: VSwitchId3
+      InstanceChargeType:
+        Ref: PayType
+      PeriodUnit:
+        Ref: PayPeriodUnit
+      Period:
+        Ref: PayPeriod
+      ImageId: 
+        Ref: ImageId
+      InstanceType: 
+        Ref: EcsInstanceType3
+      SecurityGroupId: 
+        Ref: SecurityGroupId1
+      InstanceName: 
+        Ref: InstanceName5
+      SystemDiskCategory:
+        Ref: SystemDiskCategory3
+      SystemDiskSize: 
+        Ref: DiskSize
+      DiskMappings:
+        - Category: 
+            Ref: DataDiskCategory3
+          Size: 
+            Ref: DiskSize
+  ECSInstance6:
+    Type: 'ALIYUN::ECS::Instance'
+    Properties:
+      VpcId:
+        Ref: VpcId
+      ZoneId:
+        Ref: ZoneId3
+      VSwitchId:
+        Ref: VSwitchId3
+      InstanceChargeType:
+        Ref: PayType
+      PeriodUnit:
+        Ref: PayPeriodUnit
+      Period:
+        Ref: PayPeriod
+      ImageId: 
+        Ref: ImageId
+      InstanceType: 
+        Ref: EcsInstanceType3
+      SecurityGroupId: 
+        Ref: SecurityGroupId2
+      InstanceName: 
+        Ref: InstanceName6
+      SystemDiskCategory:
+        Ref: SystemDiskCategory3
+      SystemDiskSize: 
+        Ref: DiskSize
+      DiskMappings:
+        - Category: 
+            Ref: DataDiskCategory3
+          Size: 
+            Ref: DiskSize
+Metadata:
+  'ALIYUN::ROS::Interface':
+    ParameterGroups:
+      - Parameters:
+          - VpcId
+          - PayType
+          - PayPeriodUnit
+          - PayPeriod
+          - ImageId
+          - DiskSize
+          - SecurityGroupId1
+          - SecurityGroupId2
+        Label:
+          default:
+            zh-cn: 服务器基础配置
+      - Parameters:
+          - ZoneId1
+          - EcsInstanceType1
+          - VSwitchId1
+          - SystemDiskCategory1
+          - DataDiskCategory1
+          - InstanceName1
+          - InstanceName2
+        Label:
+          default:
+            zh-cn: 服务器可用区1
+      - Parameters:
+          - ZoneId2
+          - EcsInstanceType2
+          - VSwitchId2
+          - SystemDiskCategory2
+          - DataDiskCategory2
+          - InstanceName3
+          - InstanceName4
+        Label:
+          default:
+            zh-cn: 服务器可用区2
+      - Parameters:
+          - ZoneId3
+          - EcsInstanceType3
+          - VSwitchId3
+          - SystemDiskCategory3
+          - DataDiskCategory3
+          - InstanceName5
+          - InstanceName6
+        Label:
+          default:
+            zh-cn: 服务器可用区3
+    TemplateTags:
+      - 'acs:example:ISV软件部署:单实例自定义镜像部署带数据盘公网IP可选'
