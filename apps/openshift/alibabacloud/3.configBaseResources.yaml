@@ -396,4 +396,4 @@ Metadata:
           default:
             zh-cn: 配置安全组 SG
     TemplateTags:
-      - Openshift,VPC,EIP,NAT,OSS,SG
+      - Openshift,域名解析,安全组
