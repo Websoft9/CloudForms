@@ -506,4 +506,4 @@ Metadata:
           default:
             zh-cn: 服务器可用区3
     TemplateTags:
-      - 'acs:example:ISV软件部署:单实例自定义镜像部署带数据盘公网IP可选'
+      - Openshift,ECS
