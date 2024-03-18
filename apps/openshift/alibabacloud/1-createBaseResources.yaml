@@ -53,7 +53,7 @@ Outputs:
         - MyBucket
         - DomainName
 ROSTemplateFormatVersion: '2015-09-01'
-Description: 创建openshift基本资源：VPC/VSW/EIP/NAT/OSS/SG
+Description: 创建openshift基本资源：VPC/交换机/EIP/NAT/OSS/安全组/NLB/服务器组/监听
 Parameters:
   VpcCidrBlock:
     AssociationPropertyMetadata:
@@ -472,112 +472,41 @@ Parameters:
     Label:
       zh-cn: 工作节点安全组名称
     Default: sg-openshift-worker
-  PayType:
-    Type: String
-    Label:
-      zh-cn: 付费类型
-    AssociationProperty: ChargeType
-    AssociationPropertyMetadata:
-      LocaleKey: InstanceChargeType
-    Default: PostPaid
-    AllowedValues:
-      - PostPaid
-      - PrePaid
-  PayPeriodUnit:
-    Type: String
-    Label:
-      zh-cn: 购买资源时长周期
-    AssociationProperty: PayPeriodUnit
-    AssociationPropertyMetadata:
-      Visible:
-        Condition:
-          'Fn::Not':
-            'Fn::Equals':
-              - '${PayType}'
-              - PostPaid
-    Default: Month
-    AllowedValues:
-      - Month
-      - Year
-  PayPeriod:
-    Type: Number
-    Label:
-      zh-cn: 购买资源时长
-    AssociationProperty: PayPeriod
-    AssociationPropertyMetadata:
-      Visible:
-        Condition:
-          'Fn::Not':
-            'Fn::Equals':
-              - '${PayType}'
-              - PostPaid
-    Default: 1
-    AllowedValues:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      - 8
-      - 9
-  DiskSize:
-    Type: Number
-    Label:
-      zh-cn: 磁盘容量(GB)
-    Default: 100
-  EcsInstanceType1:
-    Type: String
-    Label:
-      zh-cn: 实例类型
-    AssociationProperty: 'ALIYUN::ECS::Instance::InstanceType'
-    AssociationPropertyMetadata:
-      ZoneId: 
-        Ref: ZoneId1
-      InstanceChargeType: '${InstanceChargeType}'
-  InstanceName1:
+  ServerGroupName1:
+    Default: master-66263
+    Required: true
     Type: String
     Description:
-      zh-cn: 控制节点实例名称1
     Label:
-      zh-cn: 实例名称
-    Default: ocp-master-1
-  InstanceName2:
+      zh-cn: 服务器组名称
+  ServerGroupName2:
+    Default: master-6443
+    Required: true
     Type: String
     Description:
-      zh-cn: 工作节点实例名称1
     Label:
-      zh-cn: 实例名称
-    Default: ocp-worker-1
-  InstanceName3:
+      zh-cn: 服务器组名称
+  ServerGroupName3:
+    Default: worker-443
+    Required: true
     Type: String
     Description:
-      zh-cn: 控制节点实例名称2
     Label:
-      zh-cn: 实例名称
-    Default: ocp-master-2
-  InstanceName4:
+      zh-cn: 服务器组名称
+  ServerGroupName4:
+    Default: worker-80
+    Required: true
     Type: String
     Description:
-      zh-cn: 工作节点实例名称2
     Label:
-      zh-cn: 实例名称
-    Default: ocp-worker-2
-  InstanceName5:
+      zh-cn: 服务器组名称
+  NLBListener:
+    Default: 自动为负载创建监听：22623、6443、443、80
+    Required: true
     Type: String
     Description:
-      zh-cn: 控制节点实例名称3
     Label:
-      zh-cn: 实例名称
-    Default: ocp-master-3
-  InstanceName6:
-    Type: String
-    Description:
-      zh-cn: 工作节点实例名称3
-    Label:
-      zh-cn: 实例名称
-    Default: ocp-worker-3
+      zh-cn: 创建监听
 Mappings: 
 Conditions: 
 Resources:
@@ -814,6 +743,129 @@ Resources:
           IpProtocol: udp
           SourceCidrIp: 
             Ref: VpcCidrBlock
+  ServerGroupMaster22623:
+    Type: 'ALIYUN::NLB::ServerGroup'
+    Properties:
+      ServerGroupName: 
+        Ref: ServerGroupName1
+      VpcId: 
+        Ref: Vpc
+      Protocol: 'TCP'
+      ServerGroupType: 'Instance'
+      PreserveClientIpEnabled: false
+      HealthCheckConfig:
+        HealthCheckEnabled: true
+        HealthCheckConnectPort: 22624
+        HealthCheckUrl: '/healthz'
+        HealthCheckType: 'Http'
+        HttpCheckMethod: GET
+  ServerGroupMaster6443:
+    Type: 'ALIYUN::NLB::ServerGroup'
+    Properties:
+      ServerGroupName: 
+        Ref: ServerGroupName2
+      VpcId: 
+        Ref: Vpc
+      Protocol: 'TCP'
+      ServerGroupType: 'Instance'
+      PreserveClientIpEnabled: false
+      HealthCheckConfig:
+        HealthCheckEnabled: true
+        HealthCheckConnectPort: 6080
+        HealthCheckUrl: '/readyz'
+        HealthCheckType: 'Http'
+        HttpCheckMethod: GET
+  ServerGroupWorker443:
+    Type: 'ALIYUN::NLB::ServerGroup'
+    Properties:
+      ServerGroupName: 
+        Ref: ServerGroupName3
+      VpcId: 
+        Ref: Vpc
+      Protocol: 'TCP'
+      ServerGroupType: 'Instance'
+      PreserveClientIpEnabled: false
+      HealthCheckConfig:
+        HealthCheckEnabled: true
+        HealthCheckType: 'TCP'
+        HttpCheckMethod: GET
+  ServerGroupWorker80:
+    Type: 'ALIYUN::NLB::ServerGroup'
+    Properties:
+      ServerGroupName: 
+        Ref: ServerGroupName4
+      VpcId: 
+        Ref: Vpc
+      Protocol: 'TCP'
+      ServerGroupType: 'Instance'
+      PreserveClientIpEnabled: false
+      HealthCheckConfig:
+        HealthCheckEnabled: true
+        HealthCheckType: 'TCP'
+        HttpCheckMethod: GET
+  NLBListener1:
+    Type: 'ALIYUN::NLB::Listener'
+    Properties:
+      LoadBalancerId: 
+        Ref: LoadBalancer1
+      ListenerProtocol: 'TCP'
+      ListenerPort: 6443
+      ServerGroupId:
+        Ref: ServerGroupMaster6443
+  NLBListener2:
+    Type: 'ALIYUN::NLB::Listener'
+    Properties:
+      LoadBalancerId: 
+        Ref: LoadBalancer1
+      ListenerProtocol: 'TCP'
+      ListenerPort: 443
+      ServerGroupId:
+        Ref: ServerGroupWorker443
+  NLBListener3:
+    Type: 'ALIYUN::NLB::Listener'
+    Properties:
+      LoadBalancerId: 
+        Ref: LoadBalancer1
+      ListenerProtocol: 'TCP'
+      ListenerPort: 80
+      ServerGroupId:
+        Ref: ServerGroupWorker80
+  NLBListener4:
+    Type: 'ALIYUN::NLB::Listener'
+    Properties:
+      LoadBalancerId: 
+        Ref: LoadBalancer2
+      ListenerProtocol: 'TCP'
+      ListenerPort: 22623
+      ServerGroupId:
+        Ref: ServerGroupMaster22623
+  NLBListener5:
+    Type: 'ALIYUN::NLB::Listener'
+    Properties:
+      LoadBalancerId: 
+        Ref: LoadBalancer2
+      ListenerProtocol: 'TCP'
+      ListenerPort: 6443
+      ServerGroupId:
+        Ref: ServerGroupMaster6443
+  NLBListener6:
+    Type: 'ALIYUN::NLB::Listener'
+    Properties:
+      LoadBalancerId: 
+        Ref: LoadBalancer2
+      ListenerProtocol: 'TCP'
+      ListenerPort: 443
+      ServerGroupId:
+        Ref: ServerGroupWorker443
+  NLBListener7:
+    Type: 'ALIYUN::NLB::Listener'
+    Properties:
+      LoadBalancerId: 
+        Ref: LoadBalancer2
+      ListenerProtocol: 'TCP'
+      ListenerPort: 80
+      ServerGroupId:
+        Ref: ServerGroupWorker80
 Metadata:
   ALIYUN::ROS::Interface:
     ParameterGroups:
@@ -878,11 +930,17 @@ Metadata:
           default:
             zh-cn: 创建安全组 SG
       - Parameters:
-          - DiskSize
-          - SystemDiskCategory
-          - DataDiskCategory
+          - ServerGroupName1
+          - ServerGroupName2
+          - ServerGroupName3
+          - ServerGroupName4
         Label:
           default:
-            zh-cn: 弹性计算 ECS
+            zh-cn: 创建服务器组
+      - Parameters:
+          - NLBListener
+        Label:
+          default:
+            zh-cn: 创建服务器监听
     TemplateTags:
-      - Openshift,VPC,EIP,NAT,OSS,SG
+      - Openshift,VPC,EIP,NAT,NLB,OSS,安全组,服务器组,监听
